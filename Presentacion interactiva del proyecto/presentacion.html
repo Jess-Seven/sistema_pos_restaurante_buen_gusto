@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presentación Web - Vistas por Rol | POS Buen Gusto</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .slide-content { display: none; }
+        .slide-content.active { display: block; animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col">
+
+    <!-- HEADER / BARRA SUPERIOR -->
+    <header class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex flex-wrap justify-between items-center shadow-lg">
+        <div class="flex items-center space-x-3">
+            <div class="bg-amber-500 text-slate-900 p-2.5 rounded-xl font-black text-xl shadow">
+                <i class="fa-solid fa-utensils"></i>
+            </div>
+            <div>
+                <h1 class="font-extrabold text-xl tracking-wide text-white">BUEN GUSTO</h1>
+                <p class="text-xs text-amber-400 font-medium">Presentación Interactiva de Vistas por Rol</p>
+            </div>
+        </div>
+
+        <!-- INDICADOR DE DIAPOSITIVA -->
+        <div class="flex items-center space-x-2 bg-slate-900/80 border border-slate-700 px-4 py-2 rounded-xl">
+            <span class="text-xs text-slate-400 font-medium">Diapositiva:</span>
+            <span id="slide-indicator" class="text-sm font-bold text-amber-400">1 / 5</span>
+        </div>
+    </header>
+
+    <!-- NAVEGACIÓN DE DIAPOSITIVAS (TABS) -->
+    <nav class="bg-slate-950 border-b border-slate-800 px-6 py-2 flex overflow-x-auto space-x-2">
+        <button onclick="goToSlide(0)" class="nav-btn active-tab bg-amber-500 text-slate-900 font-bold px-4 py-2 rounded-lg text-xs flex items-center gap-2 shrink-0 transition">
+            <i class="fa-solid fa-[#]"></i> 1. Visión General
+        </button>
+        <button onclick="goToSlide(1)" class="nav-btn bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium px-4 py-2 rounded-lg text-xs flex items-center gap-2 shrink-0 transition">
+            <i class="fa-solid fa-concierge-bell"></i> 2. Rol Mesero
+        </button>
+        <button onclick="goToSlide(2)" class="nav-btn bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium px-4 py-2 rounded-lg text-xs flex items-center gap-2 shrink-0 transition">
+            <i class="fa-solid fa-fire-burner"></i> 3. Rol Cocina (KDS)
+        </button>
+        <button onclick="goToSlide(3)" class="nav-btn bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium px-4 py-2 rounded-lg text-xs flex items-center gap-2 shrink-0 transition">
+            <i class="fa-solid fa-user-shield"></i> 4. Rol Administrador
+        </button>
+        <button onclick="goToSlide(4)" class="nav-btn bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium px-4 py-2 rounded-lg text-xs flex items-center gap-2 shrink-0 transition">
+            <i class="fa-solid fa-layer-group"></i> 5. Matriz de Permisos
+        </button>
+    </nav>
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <main class="flex-1 p-6 max-w-7xl mx-auto w-full overflow-y-auto">
+
+        <!-- DIAPOSITIVA 1: VISIÓN GENERAL Y ACCESO -->
+        <section class="slide-content active" id="slide-0">
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-8 shadow-xl space-y-6">
+                <div class="border-b border-slate-700 pb-4">
+                    <span class="text-xs font-bold text-amber-400 uppercase tracking-widest block mb-1">Módulo de Autenticación</span>
+                    <h2 class="text-3xl font-black text-white">Estructura General y Sistema de Autenticación</h2>
+                    <p class="text-slate-400 text-sm mt-1">Acceso centralizado con control de perfiles, bloqueo de seguridad y restablecimiento de credenciales.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <!-- Descripción técnica -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-bold text-amber-400 flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved"></i> Control de Acceso por Usuarios
+                        </h3>
+                        <ul class="space-y-2.5 text-sm text-slate-300">
+                            <li class="flex items-start gap-2">
+                                <i class="fa-solid fa-check text-emerald-400 mt-1"></i>
+                                <span><strong>Ingreso Rápido:</strong> Selector de usuarios precargados en pantalla de login.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i class="fa-solid fa-check text-emerald-400 mt-1"></i>
+                                <span><strong>Contraseña Predeterminada:</strong> Clave base universal (<code>1234</code>) personalizable por cada usuario.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i class="fa-solid fa-check text-emerald-400 mt-1"></i>
+                                <span><strong>Protección Activa:</strong> Cuentas suspendidas/bloqueadas por el Administrador no pueden iniciar sesión.</span>
+                            </li>
+                        </ul>
+
+                        <!-- Badges de Usuarios Iniciales -->
+                        <div class="pt-4 border-t border-slate-700">
+                            <p class="text-xs text-slate-400 font-bold uppercase mb-2">Usuarios Demo Registrados:</p>
+                            <div class="flex flex-wrap gap-2 text-xs">
+                                <span class="bg-purple-900/50 text-purple-300 border border-purple-700 px-3 py-1 rounded-lg"><strong>admin</strong> (Administrador)</span>
+                                <span class="bg-blue-900/50 text-blue-300 border border-blue-700 px-3 py-1 rounded-lg"><strong>carlos</strong> (Mesero)</span>
+                                <span class="bg-blue-900/50 text-blue-300 border border-blue-700 px-3 py-1 rounded-lg"><strong>maria</strong> (Mesero)</span>
+                                <span class="bg-amber-900/50 text-amber-300 border border-amber-700 px-3 py-1 rounded-lg"><strong>mario</strong> (Chef / Cocina)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mockup de Login -->
+                    <div class="bg-slate-900 border border-slate-700 p-6 rounded-2xl shadow-2xl space-y-4">
+                        <div class="text-center border-b border-slate-800 pb-3">
+                            <div class="inline-flex bg-amber-500 text-slate-900 p-2 rounded-xl mb-1">
+                                <i class="fa-solid fa-utensils text-lg"></i>
+                            </div>
+                            <h4 class="font-bold text-white text-base">BUEN GUSTO</h4>
+                            <p class="text-[10px] text-amber-400">Control de Acceso & Autenticación</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div class="p-2 bg-slate-800 rounded border border-slate-700 text-slate-300">
+                                <p class="font-bold">admin</p>
+                                <span class="text-[10px] text-slate-400">Admin</span>
+                            </div>
+                            <div class="p-2 bg-slate-800 rounded border border-slate-700 text-slate-300">
+                                <p class="font-bold">carlos</p>
+                                <span class="text-[10px] text-slate-400">Mesero</span>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="bg-slate-800 p-2 rounded text-xs text-slate-400 border border-slate-700"><i class="fa-solid fa-user mr-2"></i>carlos</div>
+                            <div class="bg-slate-800 p-2 rounded text-xs text-slate-400 border border-slate-700"><i class="fa-solid fa-key mr-2"></i>••••••••</div>
+                            <div class="bg-amber-500 text-slate-900 font-bold p-2 text-center rounded text-xs">Iniciar Sesión</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DIAPOSITIVA 2: ROL MESERO -->
+        <section class="slide-content" id="slide-1">
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-8 shadow-xl space-y-6">
+                <div class="border-b border-slate-700 pb-4 flex justify-between items-start">
+                    <div>
+                        <span class="text-xs font-bold text-blue-400 uppercase tracking-widest block mb-1">Rol Operativo</span>
+                        <h2 class="text-3xl font-black text-white flex items-center gap-2">
+                            <i class="fa-solid fa-concierge-bell text-amber-500"></i> Vistas del Rol: Mesero
+                        </h2>
+                        <p class="text-slate-400 text-sm mt-1">Gestión de toma de comandas, catálogo de menú y monitoreo de mapas de mesas.</p>
+                    </div>
+                    <span class="bg-blue-900/60 border border-blue-600 text-blue-300 text-xs px-3 py-1.5 rounded-xl font-bold">Alias: carlos / maria</span>
+                </div>
+
+                <!-- Modulos de Mesero -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Vista 1: POS / Pedidos -->
+                    <div class="bg-slate-900 border border-slate-700 p-5 rounded-xl space-y-3">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                            <h3 class="font-bold text-amber-400 text-base flex items-center gap-2">
+                                <i class="fa-solid fa-cash-register"></i> 1. Menú & Carta Digital (POS)
+                            </h3>
+                            <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded">Mesa Activa</span>
+                        </div>
+                        <ul class="text-xs space-y-2 text-slate-300">
+                            <li>• <strong>Filtro por Categorías:</strong> Entradas, Platos Fuertes, Bebidas y Postres.</li>
+                            <li>• <strong>Indicador de Stock:</strong> Bloqueo automático cuando un insumo está agotado.</li>
+                            <li>• <strong>Personalización de Plato:</strong> Modal para especificar alergias (ej. sin gluten) y observaciones (ej. término medio).</li>
+                            <li>• <strong>Cálculo Automático:</strong> Estimación de tiempo de preparación y total acumulado.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Vista 2: Estado de Mesas -->
+                    <div class="bg-slate-900 border border-slate-700 p-5 rounded-xl space-y-3">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                            <h3 class="font-bold text-amber-400 text-base flex items-center gap-2">
+                                <i class="fa-solid fa-chair"></i> 2. Estado de Mesas en Tiempo Real
+                            </h3>
+                            <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded">Monitoreo</span>
+                        </div>
+                        <ul class="text-xs space-y-2 text-slate-300">
+                            <li>• <span class="text-emerald-400 font-bold">Disponible:</span> Mesa libre para asignación.</li>
+                            <li>• <span class="text-amber-400 font-bold">Ocupada / En Preparación:</span> Comanda enviada a cocina.</li>
+                            <li>• <span class="text-blue-400 font-bold">Pedido Listo:</span> Notificación animada para servir inmediatamente.</li>
+                            <li>• <span class="text-purple-400 font-bold">Reservada:</span> Asignación previa de mesa.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Botón interactivo simulación -->
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs flex justify-between items-center">
+                    <span class="text-slate-400"><i class="fa-solid fa-lightbulb text-amber-400 mr-2"></i> Flujo del Mesero: Seleccionar Mesa ➔ Agregar Platos/Notas ➔ Enviar Pedido a Cocina.</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- DIAPOSITIVA 3: ROL COCINA -->
+        <section class="slide-content" id="slide-2">
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-8 shadow-xl space-y-6">
+                <div class="border-b border-slate-700 pb-4 flex justify-between items-start">
+                    <div>
+                        <span class="text-xs font-bold text-amber-400 uppercase tracking-widest block mb-1">Rol Operativo</span>
+                        <h2 class="text-3xl font-black text-white flex items-center gap-2">
+                            <i class="fa-solid fa-kitchen-set text-amber-500"></i> Vista del Rol: Personal de Cocina (KDS)
+                        </h2>
+                        <p class="text-slate-400 text-sm mt-1">Pantalla de Control de Cocina en tiempo real para preparación de comandas.</p>
+                    </div>
+                    <span class="bg-amber-900/60 border border-amber-600 text-amber-300 text-xs px-3 py-1.5 rounded-xl font-bold">Alias: mario</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <div class="space-y-4 text-sm text-slate-300">
+                        <h3 class="font-bold text-white text-lg">Funcionalidades Clave del KDS:</h3>
+                        <ul class="space-y-3">
+                            <li class="flex items-start gap-2.5">
+                                <i class="fa-solid fa-clock text-amber-400 mt-1"></i>
+                                <span><strong>Cronómetro de Comanda:</strong> Visualiza tiempo transcurrido vs. tiempo estimado de preparación. Se resalta si está sobretiempo.</span>
+                            </li>
+                            <li class="flex items-start gap-2.5">
+                                <i class="fa-solid fa-triangle-exclamation text-red-400 mt-1"></i>
+                                <span><strong>Alertas de Alergias:</strong> Banners destacados en rojo para restricciones alimentarias notificadas por el mesero.</span>
+                            </li>
+                            <li class="flex items-start gap-2.5">
+                                <i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i>
+                                <span><strong>Ciclo de Estado:</strong> Permite pasar comanda de <em>"En preparación"</em> a <em>"Listo"</em> y finalmente a <em>"Entregado a Mesa"</em>.</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Mockup KDS Card -->
+                    <div class="bg-slate-900 border-2 border-amber-500/50 p-5 rounded-2xl shadow-2xl space-y-4">
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                            <div>
+                                <span class="text-[10px] text-slate-400 block">ORD-4821</span>
+                                <h4 class="font-bold text-amber-400 text-base">Mesa 3</h4>
+                            </div>
+                            <span class="bg-red-500/20 text-red-400 border border-red-500/40 text-[10px] px-2 py-1 rounded font-bold">
+                                <i class="fa-regular fa-clock"></i> 14 / 12 min
+                            </span>
+                        </div>
+                        <ul class="space-y-2 text-xs">
+                            <li class="border-b border-slate-800 pb-1">
+                                <span class="font-bold text-white"><span class="text-amber-400 font-extrabold">2x</span> Hamburguesa Gourmet</span>
+                                <div class="text-[10px] text-red-400 bg-red-950/60 px-2 py-0.5 rounded mt-0.5"><i class="fa-solid fa-triangle-exclamation"></i> Alergia: Sin sésamo</div>
+                            </li>
+                            <li>
+                                <span class="font-bold text-white"><span class="text-amber-400 font-extrabold">1x</span> Papas Nativas</span>
+                                <div class="text-[10px] text-amber-300 italic"><i class="fa-solid fa-pen"></i> Queso extra</div>
+                            </li>
+                        </ul>
+                        <div class="bg-amber-500 text-slate-900 text-center font-black p-2 rounded-xl text-xs shadow">
+                            <i class="fa-solid fa-check"></i> Marcar como Listo
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DIAPOSITIVA 4: ROL ADMINISTRADOR -->
+        <section class="slide-content" id="slide-3">
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-8 shadow-xl space-y-6">
+                <div class="border-b border-slate-700 pb-4 flex justify-between items-start">
+                    <div>
+                        <span class="text-xs font-bold text-purple-400 uppercase tracking-widest block mb-1">Rol Gerencial / Control Total</span>
+                        <h2 class="text-3xl font-black text-white flex items-center gap-2">
+                            <i class="fa-solid fa-user-shield text-amber-500"></i> Vistas del Rol: Administrador
+                        </h2>
+                        <p class="text-slate-400 text-sm mt-1">Supervisión integral de usuarios, almacén de insumos y auditoría de seguridad.</p>
+                    </div>
+                    <span class="bg-purple-900/60 border border-purple-600 text-purple-300 text-xs px-3 py-1.5 rounded-xl font-bold">Alias: admin</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Vista Users -->
+                    <div class="bg-slate-900 border border-slate-700 p-5 rounded-xl space-y-3">
+                        <div class="text-purple-400 text-2xl"><i class="fa-solid fa-users-gear"></i></div>
+                        <h3 class="font-bold text-white text-base">Gestión de Usuarios</h3>
+                        <ul class="text-xs space-y-1.5 text-slate-300">
+                            <li>• Crear nuevos usuarios y asignar roles.</li>
+                            <li>• Editar nombres, alias y perfiles.</li>
+                            <li>• Bloquear/desbloquear cuentas.</li>
+                            <li>• Restablecer contraseña a clave <code>1234</code>.</li>
+                            <li>• Eliminar cuentas de personal.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Vista Inventario -->
+                    <div class="bg-slate-900 border border-slate-700 p-5 rounded-xl space-y-3">
+                        <div class="text-amber-400 text-2xl"><i class="fa-solid fa-boxes-stacked"></i></div>
+                        <h3 class="font-bold text-white text-base">Control de Inventario</h3>
+                        <ul class="text-xs space-y-1.5 text-slate-300">
+                            <li>• Control de stock de materias primas.</li>
+                            <li>• Definición de umbrales de stock mínimo.</li>
+                            <li>• Alerta visual de "Stock Crítico".</li>
+                            <li>• Reabastecimiento rápido (+10 unidades) en un clic.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Vista Auditoría -->
+                    <div class="bg-slate-900 border border-slate-700 p-5 rounded-xl space-y-3">
+                        <div class="text-emerald-400 text-2xl"><i class="fa-solid fa-clipboard-check"></i></div>
+                        <h3 class="font-bold text-white text-base">Auditoría y Registros</h3>
+                        <ul class="text-xs space-y-1.5 text-slate-300">
+                            <li>• Historial con fecha/hora e IP/usuario.</li>
+                            <li>• Registro de incios/cierres de sesión.</li>
+                            <li>• Trazabilidad de comandas y reabastecimientos.</li>
+                            <li>• Opción de purga/limpieza de logs.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DIAPOSITIVA 5: MATRIZ DE PERMISOS -->
+        <section class="slide-content" id="slide-4">
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-8 shadow-xl space-y-6">
+                <div class="border-b border-slate-700 pb-4">
+                    <span class="text-xs font-bold text-emerald-400 uppercase tracking-widest block mb-1">Resumen Operativo</span>
+                    <h2 class="text-3xl font-black text-white">Matriz General de Accesos y Permisos por Rol</h2>
+                    <p class="text-slate-400 text-sm mt-1">Comparativa de privilegios por módulo en la aplicación "Buen Gusto".</p>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900 text-slate-400 text-xs uppercase border-b border-slate-700">
+                                <th class="p-3">Módulo / Vista</th>
+                                <th class="p-3 text-center">Mesero</th>
+                                <th class="p-3 text-center">Cocina</th>
+                                <th class="p-3 text-center">Administrador</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-700 text-slate-300">
+                            <tr>
+                                <td class="p-3 font-semibold text-white"><i class="fa-solid fa-cash-register text-amber-400 mr-2"></i> Pedidos (POS)</td>
+                                <td class="p-3 text-center text-emerald-400"><i class="fa-solid fa-circle-check"></i> Acceso Total</td>
+                                <td class="p-3 text-center text-slate-500"><i class="fa-solid fa-circle-xmark"></i> Restringido</td>
+                                <td class="p-3 text-center text-emerald-400"><i class="fa-solid fa-circle-check"></i> Acceso Total</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-white"><i class="fa-solid fa-chair text-amber-400 mr-2"></i> Estado de Mesas</td>
+                                <td class="p-3 text-center text-emerald-400"><i class="fa-solid fa-circle-check"></i> Acceso Total</td>
+                                <td class="p-3 text-center text-slate-500"><i class="fa-solid fa-circle-xmark"></i> Restringido</td>
+                                <td class="p-3 text-center text-emerald-400"><i class="fa-solid fa-circle-check"></i> Acceso Total</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-white"><i class="fa-solid fa-fire-burner text-amber-400 mr-2"></i> Cocina (KDS)</td>
+                                <td class="p-3 text-center text-slate-500"><i class="fa-solid fa-circle-xmark"></i> Restringido</td>
+                                <td class="p-3 text-center text-emerald-400"><i class="fa-solid fa-circle-check"></i> Acceso Principal</td>
+                                <td class="p-3 text-center text-emerald-400"><i class="fa-solid fa-circle-check"></i> Acceso Total</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-white"><i class="fa-solid fa-users-gear text-purple-400 mr-2"></i> Gestión Usuarios (CRUD)</td>
+                                <td class="p-3 text-center text-slate-500"><i class="fa-solid fa-circle-xmark"></i> Restringido</td>
+                                <td class="p-3 text-center text-slate-500"><i class="fa-solid fa-circle-xmark"></i> Restringido</td>
+                                <td class="p-3 text-center text-purple-400 font-bold"><i class="fa-solid fa-lock"></i> Exclusivo Admin</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-white"><i class="fa-solid fa-boxes-stacked text-purple-400 mr-2"></i> Inventario de Insumos</td>
+                                <td class="p-3 text-center text-slate-500"><i class="fa-solid fa-circle-xmark"></i> Restringido</td>
+                                <td class="p-3 text-center text-slate-500"><i class="fa-solid fa-circle-xmark"></i> Restringido</td>
+                                <td class="p-3 text-center text-purple-400 font-bold"><i class="fa-solid fa-lock"></i> Exclusivo Admin</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-white"><i class="fa-solid fa-clipboard-list text-amber-400 mr-2"></i> Registro de Auditoría</td>
+                                <td class="p-3 text-center text-slate-500"><i class="fa-solid fa-circle-xmark"></i> Restringido</td>
+                                <td class="p-3 text-center text-slate-500"><i class="fa-solid fa-circle-xmark"></i> Restringido</td>
+                                <td class="p-3 text-center text-emerald-400"><i class="fa-solid fa-circle-check"></i> Acceso Total</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER / CONTROLES DE DIAPOSITIVAS -->
+    <footer class="bg-slate-800 border-t border-slate-700 px-6 py-4 flex justify-between items-center shadow-lg">
+        <button id="btn-prev" onclick="changeSlide(-1)" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-4 py-2 rounded-xl text-sm transition flex items-center gap-2">
+            <i class="fa-solid fa-chevron-left"></i> Anterior
+        </button>
+
+        <span class="text-xs text-slate-400">Presentación desplegada en Web para POS Buen Gusto</span>
+
+        <button id="btn-next" onclick="changeSlide(1)" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-black px-4 py-2 rounded-xl text-sm transition flex items-center gap-2">
+            Siguiente <i class="fa-solid fa-chevron-right"></i>
+        </button>
+    </footer>
+
+    <!-- LOGICA JS DE LA PRESENTACIÓN -->
+    <script>
+        let currentSlide = 0;
+        const totalSlides = 5;
+
+        function updateSlideUI() {
+            // Activar contenido
+            document.querySelectorAll('.slide-content').forEach((s, idx) => {
+                if (idx === currentSlide) s.classList.add('active');
+                else s.classList.remove('active');
+            });
+
+            // Activar pestañas de navegación
+            document.querySelectorAll('.nav-btn').forEach((btn, idx) => {
+                if (idx === currentSlide) {
+                    btn.className = "nav-btn active-tab bg-amber-500 text-slate-900 font-bold px-4 py-2 rounded-lg text-xs flex items-center gap-2 shrink-0 transition";
+                } else {
+                    btn.className = "nav-btn bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium px-4 py-2 rounded-lg text-xs flex items-center gap-2 shrink-0 transition";
+                }
+            });
+
+            // Indicador
+            document.getElementById('slide-indicator').innerText = `${currentSlide + 1} / ${totalSlides}`;
+
+            // Estado de botones Anterior / Siguiente
+            document.getElementById('btn-prev').disabled = currentSlide === 0;
+            document.getElementById('btn-prev').style.opacity = currentSlide === 0 ? "0.5" : "1";
+
+            document.getElementById('btn-next').disabled = currentSlide === totalSlides - 1;
+            document.getElementById('btn-next').style.opacity = currentSlide === totalSlides - 1 ? "0.5" : "1";
+        }
+
+        function goToSlide(idx) {
+            currentSlide = idx;
+            updateSlideUI();
+        }
+
+        function changeSlide(direction) {
+            currentSlide += direction;
+            if (currentSlide < 0) currentSlide = 0;
+            if (currentSlide >= totalSlides) currentSlide = totalTotal - 1;
+            updateSlideUI();
+        }
+
+        // Eventos de Teclado (Flechas Izquierda / Derecha)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' && currentSlide < totalSlides - 1) changeSlide(1);
+            if (e.key === 'ArrowLeft' && currentSlide > 0) changeSlide(-1);
+        });
+
+        // Inicializar
+        updateSlideUI();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buen Gusto - Sistema POS & Gestión de Usuarios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @keyframes pulse-fast {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .animate-pulse-fast {
+            animation: pulse-fast 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-800 h-screen flex flex-col overflow-hidden">
+
+    <!-- LOGIN OVERLAY / AUTH SYSTEM -->
+    <div id="auth-screen" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-slate-700">
+            <!-- Header Login -->
+            <div class="bg-slate-900 text-white p-6 text-center border-b border-slate-800 relative">
+                <div class="inline-flex bg-amber-500 text-slate-900 p-3 rounded-2xl mb-2 shadow-lg">
+                    <i class="fa-solid fa-utensils text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-black tracking-wide">BUEN GUSTO</h2>
+                <p class="text-xs text-amber-400 font-medium mt-0.5">Control de Acceso & Autenticación de Personal</p>
+            </div>
+
+            <!-- Login Form -->
+            <div class="p-6 space-y-5">
+                <!-- User Selector Quick Buttons -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Seleccionar Usuario para Ingresar:</label>
+                    <div id="quick-users-list" class="grid grid-cols-2 gap-2 mb-3">
+                        <!-- Populated dynamically with users -->
+                    </div>
+                </div>
+
+                <hr class="border-slate-100">
+
+                <form id="login-form" onsubmit="handleLoginSubmit(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Nombre de Usuario / Alias</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-user absolute left-3 top-3 text-slate-400"></i>
+                            <input type="text" id="login-username" required placeholder="Ej. admin, carlos, maria" class="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-xs font-bold text-slate-700">Contraseña (Por defecto: 1234)</label>
+                        </div>
+                        <div class="relative">
+                            <i class="fa-solid fa-key absolute left-3 top-3 text-slate-400"></i>
+                            <input type="password" id="login-password" required placeholder="••••••••" class="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div id="login-error-msg" class="hidden p-2.5 bg-red-50 border border-red-200 text-red-600 rounded-lg text-xs font-semibold flex items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span id="login-error-text">Credenciales incorrectas.</span>
+                    </div>
+
+                    <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-2.5 rounded-xl transition shadow-md flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOP HEADER BAR -->
+    <header class="bg-slate-900 text-white h-14 flex items-center justify-between px-4 shrink-0 shadow-md z-20">
+        <div class="flex items-center space-x-3">
+            <div class="bg-amber-500 p-2 rounded-lg text-slate-900 font-black text-xl">
+                <i class="fa-solid fa-utensils"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight">BUEN GUSTO</h1>
+                <p class="text-xs text-amber-400">Sistema POS & Gestión Integral</p>
+            </div>
+        </div>
+
+        <!-- Authenticated User Profile & Logout -->
+        <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-2 bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-xl">
+                <div id="user-avatar" class="w-7 h-7 bg-amber-500 text-slate-900 font-black text-xs rounded-full flex items-center justify-center">
+                    AD
+                </div>
+                <div class="text-left">
+                    <span id="user-display-name" class="block text-xs font-bold text-white leading-tight">Administrador</span>
+                    <span id="user-display-role" class="block text-[10px] text-amber-400 font-medium capitalize">Admin</span>
+                </div>
+            </div>
+
+            <button onclick="openChangePasswordModal()" title="Cambiar mi Contraseña" class="p-2 hover:bg-slate-800 text-slate-300 hover:text-amber-400 rounded-lg transition text-sm">
+                <i class="fa-solid fa-key"></i>
+            </button>
+
+            <button onclick="logout()" title="Cerrar Sesión" class="p-2 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white rounded-lg transition text-sm flex items-center gap-1 font-bold">
+                <i class="fa-solid fa-right-from-bracket"></i> Salir
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN APP LAYOUT -->
+    <div class="flex flex-1 overflow-hidden">
+
+        <!-- LATERAL NAV -->
+        <aside class="w-20 bg-slate-800 flex flex-col items-center py-4 space-y-5 shrink-0 z-10">
+            <button onclick="switchTab('mesero-pos')" id="nav-pos" class="nav-tab active-tab flex flex-col items-center p-2 rounded-xl text-amber-400 hover:text-amber-300 transition w-16 group">
+                <i class="fa-solid fa-cash-register text-2xl mb-1 group-hover:scale-110 transition-transform"></i>
+                <span class="text-[10px] font-medium">Pedidos</span>
+            </button>
+            
+            <button onclick="switchTab('estado-mesas')" id="nav-mesas" class="nav-tab flex flex-col items-center p-2 rounded-xl text-slate-400 hover:text-amber-400 transition w-16 group">
+                <i class="fa-solid fa-chair text-2xl mb-1 group-hover:scale-110 transition-transform"></i>
+                <span class="text-[10px] font-medium">Mesas</span>
+            </button>
+
+            <button onclick="switchTab('pantalla-cocina')" id="nav-cocina" class="nav-tab flex flex-col items-center p-2 rounded-xl text-slate-400 hover:text-amber-400 transition w-16 group relative">
+                <i class="fa-solid fa-fire-burner text-2xl mb-1 group-hover:scale-110 transition-transform"></i>
+                <span class="text-[10px] font-medium">Cocina</span>
+                <span id="cocina-count-badge" class="absolute -top-1 -right-1 bg-amber-500 text-slate-900 font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center hidden">0</span>
+            </button>
+
+            <button onclick="switchTab('admin-users')" id="nav-users" class="nav-tab admin-only flex flex-col items-center p-2 rounded-xl text-slate-400 hover:text-amber-400 transition w-16 group">
+                <i class="fa-solid fa-users-gear text-2xl mb-1 group-hover:scale-110 transition-transform"></i>
+                <span class="text-[10px] font-medium">Usuarios</span>
+            </button>
+
+            <button onclick="switchTab('admin-dashboard')" id="nav-admin" class="nav-tab admin-only flex flex-col items-center p-2 rounded-xl text-slate-400 hover:text-amber-400 transition w-16 group">
+                <i class="fa-solid fa-boxes-stacked text-2xl mb-1 group-hover:scale-110 transition-transform"></i>
+                <span class="text-[10px] font-medium">Inventario</span>
+            </button>
+
+            <button onclick="switchTab('audit-log')" id="nav-audit" class="nav-tab flex flex-col items-center p-2 rounded-xl text-slate-400 hover:text-amber-400 transition w-16 group">
+                <i class="fa-solid fa-clipboard-list text-2xl mb-1 group-hover:scale-110 transition-transform"></i>
+                <span class="text-[10px] font-medium">Auditoría</span>
+            </button>
+        </aside>
+
+        <!-- MAIN VIEW AREA -->
+        <main class="flex-1 overflow-hidden relative">
+
+            <!-- VISTA 1: POS / MESERO -->
+            <section id="view-mesero-pos" class="h-full flex overflow-hidden">
+                <div class="flex-1 flex flex-col bg-slate-50 border-r border-slate-200 overflow-hidden">
+                    <div class="p-4 bg-white border-b border-slate-200 shadow-sm space-y-3">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-xl font-bold text-slate-800">Menú & Carta Digital</h2>
+                            <span class="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full border border-slate-200 flex items-center gap-1">
+                                <i class="fa-solid fa-table text-amber-500"></i> Mesa Activa: <strong id="current-table-label" class="text-slate-900">Mesa 1</strong>
+                            </span>
+                        </div>
+                        <div class="flex space-x-2 overflow-x-auto pb-1" id="category-filters">
+                            <button onclick="filterCategory('todos')" class="cat-btn active bg-amber-500 text-slate-900 font-semibold px-4 py-1.5 rounded-lg text-sm shrink-0">Todos</button>
+                            <button onclick="filterCategory('entradas')" class="cat-btn bg-white hover:bg-slate-100 text-slate-600 font-medium px-4 py-1.5 rounded-lg text-sm border border-slate-200 shrink-0">Entradas</button>
+                            <button onclick="filterCategory('fuertes')" class="cat-btn bg-white hover:bg-slate-100 text-slate-600 font-medium px-4 py-1.5 rounded-lg text-sm border border-slate-200 shrink-0">Platos Fuertes</button>
+                            <button onclick="filterCategory('bebidas')" class="cat-btn bg-white hover:bg-slate-100 text-slate-600 font-medium px-4 py-1.5 rounded-lg text-sm border border-slate-200 shrink-0">Bebidas</button>
+                            <button onclick="filterCategory('postres')" class="cat-btn bg-white hover:bg-slate-100 text-slate-600 font-medium px-4 py-1.5 rounded-lg text-sm border border-slate-200 shrink-0">Postres</button>
+                        </div>
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-4">
+                        <div id="dishes-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                    </div>
+                </div>
+
+                <!-- Order Sidebar -->
+                <div class="w-96 bg-white flex flex-col border-l border-slate-200 shadow-lg shrink-0">
+                    <div class="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg">Comanda Actual</h3>
+                            <p class="text-xs text-slate-500" id="order-table-title">Mesa 1</p>
+                        </div>
+                        <button onclick="clearCurrentOrder()" class="text-xs text-red-500 hover:text-red-700 font-semibold flex items-center gap-1">
+                            <i class="fa-solid fa-trash"></i> Vaciar
+                        </button>
+                    </div>
+
+                    <div id="order-items-list" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
+
+                    <div class="p-4 bg-slate-50 border-t border-slate-200 space-y-3">
+                        <div class="space-y-1 text-sm border-b border-slate-200 pb-2">
+                            <div class="flex justify-between text-slate-600">
+                                <span>Tiempo est. preparación:</span>
+                                <span class="text-amber-600 font-bold" id="estimated-time">0 min</span>
+                            </div>
+                            <div class="flex justify-between text-slate-800 text-base font-bold pt-1">
+                                <span>Total:</span>
+                                <span class="text-slate-900" id="order-total">$0.00</span>
+                            </div>
+                        </div>
+
+                        <button onclick="submitOrder()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition shadow-md flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <span>Enviar Pedido a Cocina</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VISTA 2: ESTADO DE MESAS -->
+            <section id="view-estado-mesas" class="h-full p-6 bg-slate-100 overflow-y-auto hidden">
+                <div class="max-w-6xl mx-auto space-y-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800">Estado de Mesas en Tiempo Real</h2>
+                            <p class="text-slate-500 text-sm">Monitoree ocupación y avance de pedidos.</p>
+                        </div>
+                        <div class="flex space-x-4 text-xs font-semibold">
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500"></span> Disponible</span>
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-500"></span> Ocupada (En preparación)</span>
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-500"></span> Pedido Listo</span>
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-purple-500"></span> Reservada</span>
+                        </div>
+                    </div>
+                    <div id="tables-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+                </div>
+            </section>
+
+            <!-- VISTA 3: PANTALLA DE COCINA (KDS) -->
+            <section id="view-pantalla-cocina" class="h-full p-6 bg-slate-900 overflow-y-auto hidden">
+                <div class="max-w-7xl mx-auto space-y-4">
+                    <div class="flex justify-between items-center text-white border-b border-slate-800 pb-4">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid fa-kitchen-set text-amber-500 text-3xl"></i>
+                            <div>
+                                <h2 class="text-2xl font-bold">Pantalla de Control de Cocina (KDS)</h2>
+                                <p class="text-slate-400 text-sm">Comandas pendientes y tiempo transcurrido</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs text-slate-400 block">Comandas activas:</span>
+                            <span class="text-xl font-bold text-amber-400" id="active-kitchen-orders-count">0</span>
+                        </div>
+                    </div>
+                    <div id="kitchen-orders-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                </div>
+            </section>
+
+            <!-- VISTA 4: GESTIÓN DE USUARIOS (ADMIN SOLAMENTE) -->
+            <section id="view-admin-users" class="h-full p-6 bg-slate-100 overflow-y-auto hidden">
+                <div class="max-w-6xl mx-auto space-y-6">
+                    <div class="flex justify-between items-center bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <div>
+                            <h2 class="text-2xl font-black text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-user-shield text-amber-500"></i> Gestión de Usuarios & Permisos
+                            </h2>
+                            <p class="text-slate-500 text-sm">Cree usuarios, asigne roles, gestione contraseñas y bloquee o elimine cuentas.</p>
+                        </div>
+                        <button onclick="openUserModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-4 py-2.5 rounded-xl transition shadow flex items-center gap-2 text-sm">
+                            <i class="fa-solid fa-user-plus"></i> Crear Nuevo Usuario
+                        </button>
+                    </div>
+
+                    <!-- Roles Quick Summary cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-slate-500 font-semibold uppercase">Administradores</p>
+                                <p id="count-admin-users" class="text-2xl font-bold text-slate-800">1</p>
+                            </div>
+                            <div class="bg-purple-100 text-purple-600 p-3 rounded-lg"><i class="fa-solid fa-user-gear text-xl"></i></div>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-slate-500 font-semibold uppercase">Meseros</p>
+                                <p id="count-mesero-users" class="text-2xl font-bold text-slate-800">2</p>
+                            </div>
+                            <div class="bg-blue-100 text-blue-600 p-3 rounded-lg"><i class="fa-solid fa-concierge-bell text-xl"></i></div>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-slate-500 font-semibold uppercase">Personal Cocina</p>
+                                <p id="count-cocina-users" class="text-2xl font-bold text-slate-800">1</p>
+                            </div>
+                            <div class="bg-amber-100 text-amber-600 p-3 rounded-lg"><i class="fa-solid fa-fire-burner text-xl"></i></div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Usuarios -->
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                            <h3 class="font-bold text-slate-800">Lista General de Usuarios Registrados</h3>
+                            <div class="relative w-64">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                                <input type="text" id="user-search-input" onkeyup="renderUsersTable()" placeholder="Buscar usuario..." class="w-full pl-8 pr-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                            </div>
+                        </div>
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-500 text-xs uppercase border-b border-slate-200">
+                                    <th class="p-3 font-semibold">Usuario / Nombre</th>
+                                    <th class="p-3 font-semibold">Rol Asignado</th>
+                                    <th class="p-3 font-semibold">Estado</th>
+                                    <th class="p-3 font-semibold">Último Ingreso</th>
+                                    <th class="p-3 font-semibold text-right">Acciones de Gestión</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body" class="divide-y divide-slate-100 text-sm">
+                                <!-- Dynamic rendering -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VISTA 5: ADMIN DASHBOARD / INVENTARIO -->
+            <section id="view-admin-dashboard" class="h-full p-6 bg-slate-100 overflow-y-auto hidden">
+                <div class="max-w-6xl mx-auto space-y-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800">Control de Inventario de Insumos</h2>
+                            <p class="text-slate-500 text-sm">Gestión de insumos y materias primas</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200">
+                                    <th class="p-3 font-semibold">Insumo</th>
+                                    <th class="p-3 font-semibold">Stock Actual</th>
+                                    <th class="p-3 font-semibold">Mínimo</th>
+                                    <th class="p-3 font-semibold">Estado</th>
+                                    <th class="p-3 font-semibold text-right">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VISTA 6: REGISTRO DE AUDITORÍA (AUDIT LOG) -->
+            <section id="view-audit-log" class="h-full p-6 bg-slate-100 overflow-y-auto hidden">
+                <div class="max-w-6xl mx-auto space-y-6">
+                    <div class="flex justify-between items-center bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <div>
+                            <h2 class="text-2xl font-black text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-clipboard-check text-amber-500"></i> Registro y Auditoría de Actividad
+                            </h2>
+                            <p class="text-slate-500 text-sm">Seguimiento detallado de inicios de sesión, cambios de usuarios y comandas.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+                            <h3 class="font-bold text-slate-800">Historial de Eventos del Sistema</h3>
+                            <button onclick="clearAuditLogs()" class="text-xs text-red-500 hover:text-red-700 font-semibold">
+                                <i class="fa-solid fa-trash-can mr-1"></i> Limpiar Historial
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-100 text-slate-500 text-xs uppercase border-b border-slate-200">
+                                        <th class="p-3 font-semibold">Fecha / Hora</th>
+                                        <th class="p-3 font-semibold">Usuario</th>
+                                        <th class="p-3 font-semibold">Acción Realizada</th>
+                                        <th class="p-3 font-semibold">Detalle de Modificación</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="audit-log-table-body" class="divide-y divide-slate-100 text-sm">
+                                    <!-- Dynamic audit logs -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MODAL CREACIÓN / EDICIÓN DE USUARIO -->
+    <div id="user-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4 border border-slate-200">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-800 text-lg" id="user-modal-title">Crear Nuevo Usuario</h3>
+                <button onclick="closeUserModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <form id="user-form" onsubmit="handleUserFormSubmit(event)" class="space-y-3">
+                <input type="hidden" id="modal-user-id">
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nombre Completo</label>
+                    <input type="text" id="modal-user-name" required placeholder="Ej. Carlos Mendoza" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nombre de Usuario (Alias de Login)</label>
+                    <input type="text" id="modal-user-username" required placeholder="Ej. cmendoza" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Rol Asignado</label>
+                    <select id="modal-user-role" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        <option value="mesero">Mesero (Toma de pedidos y mesas)</option>
+                        <option value="cocina">Cocinero (KDS y cocina)</option>
+                        <option value="admin">Administrador (Acceso Total + Usuarios)</option>
+                    </select>
+                </div>
+
+                <div id="password-field-container">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Contraseña Inicial</label>
+                    <input type="password" id="modal-user-password" value="1234" required class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    <p class="text-[10px] text-slate-500 mt-1">Por defecto establecida en: <strong>1234</strong></p>
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeUserModal()" class="px-4 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg text-xs bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold shadow">Guardar Usuario</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL CAMBIO DE CONTRASEÑA -->
+    <div id="change-pass-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-800 text-base"><i class="fa-solid fa-key text-amber-500"></i> Cambiar mi Contraseña</h3>
+                <button onclick="closeChangePasswordModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form onsubmit="handleChangePasswordSubmit(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Contraseña Actual</label>
+                    <input type="password" id="pass-current" required class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nueva Contraseña</label>
+                    <input type="password" id="pass-new" required minlength="4" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                </div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="closeChangePasswordModal()" class="px-3 py-1.5 rounded-lg text-xs text-slate-600">Cancelar</button>
+                    <button type="submit" class="px-3 py-1.5 rounded-lg text-xs bg-amber-500 text-slate-900 font-bold">Actualizar Clave</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL OBSERVACIONES PEDIDO -->
+    <div id="notes-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-800 text-lg" id="modal-dish-title">Observaciones del Plato</h3>
+                <button onclick="closeNotesModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1"><i class="fa-solid fa-triangle-exclamation text-amber-500"></i> Alergias o Restricciones</label>
+                    <input type="text" id="modal-allergy-input" placeholder="Ej: Sin gluten" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1"><i class="fa-solid fa-pen-to-square text-slate-500"></i> Notas y Modificaciones</label>
+                    <textarea id="modal-notes-input" rows="3" placeholder="Ej: Término medio" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm"></textarea>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeNotesModal()" class="px-4 py-2 rounded-lg text-sm text-slate-600">Cancelar</button>
+                <button onclick="saveDishCustomizations()" class="px-4 py-2 rounded-lg text-sm bg-amber-500 font-bold">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIC / JAVASCRIPT STATE AND ACTIONS -->
+    <script>
+        // GLOBAL STATE
+        const state = {
+            currentUser: null, // Logged in user object
+            users: [
+                { id: 1, name: 'Administrador Principal', username: 'admin', role: 'admin', password: '1234', isLocked: false, lastLogin: '2026-09-25 10:30' },
+                { id: 2, name: 'Carlos Mendoza', username: 'carlos', role: 'mesero', password: '1234', isLocked: false, lastLogin: '2026-09-25 09:15' },
+                { id: 3, name: 'María Gómez', username: 'maria', role: 'mesero', password: '1234', isLocked: false, lastLogin: '2026-09-24 18:40' },
+                { id: 4, name: 'Chef Mario Rossi', username: 'mario', role: 'cocina', password: '1234', isLocked: false, lastLogin: '2026-09-25 08:00' }
+            ],
+            selectedTableId: 1,
+            categoriesFilter: 'todos',
+            dishes: [
+                { id: 101, name: 'Hamburguesa Gourmet', category: 'fuertes', price: 12.50, time: 15, stock: 18, image: '🍔', desc: 'Carne Angus 180g, queso cheddar, tocino.' },
+                { id: 102, name: 'Pizza Margherita', category: 'fuertes', price: 14.00, time: 12, stock: 10, image: '🍕', desc: 'Salsa de tomate, mozzarella fresca.' },
+                { id: 103, name: 'Tacos al Pastor (3 uds)', category: 'fuertes', price: 9.50, time: 10, stock: 25, image: '🌮', desc: 'Carne marinado, piña y cilantro.' },
+                { id: 104, name: 'Ensalada Cesar', category: 'entradas', price: 8.00, time: 7, stock: 12, image: '🥗', desc: 'Lechuga fresca, crutones.' },
+                { id: 105, name: 'Papas Nativas con Queso', category: 'entradas', price: 6.00, time: 8, stock: 4, image: '🍟', desc: 'Papas fritas con cheddar.' },
+                { id: 106, name: 'Jugo Natural de Mango', category: 'bebidas', price: 3.50, time: 3, stock: 30, image: '🥤', desc: '100% fruta natural.' },
+                { id: 107, name: 'Cerveza Artesanal', category: 'bebidas', price: 4.50, time: 2, stock: 0, image: '🍺', desc: 'Rubia estilo IPA (Agotado).' },
+                { id: 108, name: 'Tiramisú Tradicional', category: 'postres', price: 5.50, time: 5, stock: 8, image: '🍰', desc: 'Postre italiano con café.' },
+            ],
+            tables: [
+                { id: 1, name: 'Mesa 1', status: 'disponible', order: [] },
+                { id: 2, name: 'Mesa 2', status: 'disponible', order: [] },
+                { id: 3, name: 'Mesa 3', status: 'ocupada', order: [] },
+                { id: 4, name: 'Mesa 4', status: 'reservada', order: [] },
+                { id: 5, name: 'Mesa 5', status: 'disponible', order: [] },
+                { id: 6, name: 'Mesa 6', status: 'disponible', order: [] },
+            ],
+            kitchenOrders: [],
+            inventory: [
+                { name: 'Carne Angus 180g', stock: 18, min: 10, unit: 'uds' },
+                { name: 'Masa de Pizza', stock: 10, min: 5, unit: 'porciones' },
+                { name: 'Papas Nativas', stock: 4, min: 8, unit: 'kg' },
+                { name: 'Queso Cheddar', stock: 2, min: 5, unit: 'kg' }
+            ],
+            auditLogs: [
+                { timestamp: '2026-09-25 10:30:15', user: 'admin', action: 'INICIO_SESION', detail: 'Ingreso exitoso al sistema POS' },
+                { timestamp: '2026-09-25 09:15:20', user: 'carlos', action: 'INICIO_SESION', detail: 'Ingreso exitoso al sistema POS' }
+            ],
+            editingOrderItemIndex: null
+        };
+
+        // INITIALIZATION
+        document.addEventListener('DOMContentLoaded', () => {
+            renderQuickUsersLogin();
+            renderDishes();
+            renderCurrentOrder();
+            renderTables();
+            renderKitchen();
+            renderInventory();
+            renderAuditLogs();
+        });
+
+        // --- AUTHENTICATION MODULE ---
+        function renderQuickUsersLogin() {
+            const container = document.getElementById('quick-users-list');
+            container.innerHTML = '';
+            state.users.forEach(u => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.onclick = () => selectQuickUser(u.username);
+                btn.className = `p-2 rounded-xl text-xs text-left border flex items-center space-x-2 transition ${u.isLocked ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-slate-50 hover:bg-amber-50 border-slate-200 hover:border-amber-400 text-slate-800'}`;
+                btn.innerHTML = `
+                    <div class="w-6 h-6 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-[10px]">
+                        ${u.name.substring(0,2).toUpperCase()}
+                    </div>
+                    <div class="overflow-hidden">
+                        <span class="block font-bold truncate">${u.name}</span>
+                        <span class="text-[9px] text-slate-500 capitalize">${u.role}</span>
+                    </div>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        function selectQuickUser(username) {
+            document.getElementById('login-username').value = username;
+            document.getElementById('login-password').focus();
+            document.getElementById('login-error-msg').classList.add('hidden');
+        }
+
+        function handleLoginSubmit(e) {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            const errorBox = document.getElementById('login-error-msg');
+            const errorText = document.getElementById('login-error-text');
+
+            const user = state.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+
+            if (!user) {
+                errorText.innerText = 'El usuario especificado no existe.';
+                errorBox.classList.remove('hidden');
+                addAuditLog('SISTEMA', 'LOGIN_FALLIDO', `Intento fallido para usuario inexistente: ${username}`);
+                return;
+            }
+
+            if (user.isLocked) {
+                errorText.innerText = 'Esta cuenta se encuentra BLOQUEADA. Contacte al administrador.';
+                errorBox.classList.remove('hidden');
+                addAuditLog(user.username, 'LOGIN_BLOQUEADO', 'Intento de acceso con cuenta suspendida');
+                return;
+            }
+
+            if (user.password !== password) {
+                errorText.innerText = 'Contraseña incorrecta. Intente de nuevo.';
+                errorBox.classList.remove('hidden');
+                addAuditLog(user.username, 'LOGIN_FALLIDO', 'Contraseña incorrecta ingresada');
+                return;
+            }
+
+            // Successful login
+            state.currentUser = user;
+            user.lastLogin = new Date().toISOString().replace('T', ' ').substring(0, 16);
+            
+            errorBox.classList.add('hidden');
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('login-password').value = '';
+
+            // Update UI profile
+            document.getElementById('user-display-name').innerText = user.name;
+            document.getElementById('user-display-role').innerText = user.role;
+            document.getElementById('user-avatar').innerText = user.name.substring(0, 2).toUpperCase();
+
+            // Permissions / Role view adjustments
+            applyRolePermissions();
+
+            // Default tab based on role
+            if (user.role === 'cocina') switchTab('pantalla-cocina');
+            else switchTab('mesero-pos');
+
+            addAuditLog(user.username, 'INICIO_SESION', 'Inicio de sesión exitoso');
+        }
+
+        function logout() {
+            if (state.currentUser) {
+                addAuditLog(state.currentUser.username, 'CIERRE_SESION', 'Cierre de sesión de usuario');
+            }
+            state.currentUser = null;
+            renderQuickUsersLogin();
+            document.getElementById('auth-screen').classList.remove('hidden');
+        }
+
+        function applyRolePermissions() {
+            const role = state.currentUser ? state.currentUser.role : 'mesero';
+            document.querySelectorAll('.admin-only').forEach(el => {
+                if (role === 'admin') el.classList.remove('hidden');
+                else el.classList.add('hidden');
+            });
+        }
+
+        // --- USER MANAGEMENT MODULE (ADMIN CRUD) ---
+        function renderUsersTable() {
+            const tbody = document.getElementById('users-table-body');
+            const search = (document.getElementById('user-search-input')?.value || '').toLowerCase();
+            tbody.innerHTML = '';
+
+            let adminCount = 0, meseroCount = 0, cocinaCount = 0;
+
+            state.users.forEach(u => {
+                if (u.role === 'admin') adminCount++;
+                if (u.role === 'mesero') meseroCount++;
+                if (u.role === 'cocina') cocinaCount++;
+
+                if (search && !u.name.toLowerCase().includes(search) && !u.username.toLowerCase().includes(search)) {
+                    return;
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                tr.innerHTML = `
+                    <td class="p-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 rounded-full bg-slate-800 text-amber-400 font-bold flex items-center justify-center text-xs">
+                                ${u.name.substring(0,2).toUpperCase()}
+                            </div>
+                            <div>
+                                <span class="font-bold text-slate-800 block leading-tight">${u.name}</span>
+                                <span class="text-xs text-slate-400">@${u.username}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-3">
+                        <span class="text-xs px-2.5 py-1 rounded-full font-bold uppercase ${u.role === 'admin' ? 'bg-purple-100 text-purple-700' : u.role === 'cocina' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}">
+                            ${u.role}
+                        </span>
+                    </td>
+                    <td class="p-3">
+                        <span class="text-xs px-2.5 py-1 rounded-full font-semibold ${u.isLocked ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}">
+                            ${u.isLocked ? 'Bloqueado' : 'Activo'}
+                        </span>
+                    </td>
+                    <td class="p-3 text-xs text-slate-500">${u.lastLogin || 'Nunca'}</td>
+                    <td class="p-3 text-right space-x-1">
+                        <button onclick="editUser(${u.id})" title="Editar Usuario/Rol" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="toggleLockUser(${u.id})" title="${u.isLocked ? 'Desbloquear' : 'Bloquear'}" class="p-1.5 ${u.isLocked ? 'text-emerald-600 hover:bg-emerald-50' : 'text-amber-600 hover:bg-amber-50'} rounded transition">
+                            <i class="fa-solid ${u.isLocked ? 'fa-lock-open' : 'fa-lock'}"></i>
+                        </button>
+                        <button onclick="resetPasswordDefault(${u.id})" title="Restablecer clave a 1234" class="p-1.5 text-purple-600 hover:bg-purple-50 rounded transition"><i class="fa-solid fa-key"></i></button>
+                        ${u.username !== 'admin' ? `
+                            <button onclick="deleteUser(${u.id})" title="Eliminar Usuario" class="p-1.5 text-red-600 hover:bg-red-50 rounded transition"><i class="fa-solid fa-trash"></i></button>
+                        ` : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('count-admin-users').innerText = adminCount;
+            document.getElementById('count-mesero-users').innerText = meseroCount;
+            document.getElementById('count-cocina-users').innerText = cocinaCount;
+        }
+
+        function openUserModal(user = null) {
+            document.getElementById('user-modal-title').innerText = user ? 'Editar Usuario' : 'Crear Nuevo Usuario';
+            document.getElementById('modal-user-id').value = user ? user.id : '';
+            document.getElementById('modal-user-name').value = user ? user.name : '';
+            document.getElementById('modal-user-username').value = user ? user.username : '';
+            document.getElementById('modal-user-role').value = user ? user.role : 'mesero';
+            
+            const passContainer = document.getElementById('password-field-container');
+            if (user) {
+                passContainer.classList.add('hidden');
+                document.getElementById('modal-user-password').removeAttribute('required');
+            } else {
+                passContainer.classList.remove('hidden');
+                document.getElementById('modal-user-password').value = '1234';
+                document.getElementById('modal-user-password').setAttribute('required', 'true');
+            }
+
+            document.getElementById('user-modal').classList.remove('hidden');
+        }
+
+        function closeUserModal() {
+            document.getElementById('user-modal').classList.add('hidden');
+        }
+
+        function handleUserFormSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('modal-user-id').value;
+            const name = document.getElementById('modal-user-name').value.trim();
+            const username = document.getElementById('modal-user-username').value.trim().toLowerCase();
+            const role = document.getElementById('modal-user-role').value;
+
+            if (id) {
+                // Edit existing
+                const u = state.users.find(x => x.id == id);
+                if (u) {
+                    const oldRole = u.role;
+                    u.name = name;
+                    u.username = username;
+                    u.role = role;
+                    addAuditLog(state.currentUser.username, 'USUARIO_EDITADO', `Actualizado usuario @${username} (Rol: ${oldRole} -> ${role})`);
+                }
+            } else {
+                // Create new
+                const password = document.getElementById('modal-user-password').value;
+                const newU = {
+                    id: Date.now(),
+                    name,
+                    username,
+                    role,
+                    password: password || '1234',
+                    isLocked: false,
+                    lastLogin: 'Nunca'
+                };
+                state.users.push(newU);
+                addAuditLog(state.currentUser.username, 'USUARIO_CREADO', `Nuevo usuario creado: @${username} (${role})`);
+            }
+
+            closeUserModal();
+            renderUsersTable();
+            renderQuickUsersLogin();
+        }
+
+        function editUser(id) {
+            const u = state.users.find(x => x.id === id);
+            if (u) openUserModal(u);
+        }
+
+        function toggleLockUser(id) {
+            const u = state.users.find(x => x.id === id);
+            if (u) {
+                u.isLocked = !u.isLocked;
+                addAuditLog(state.currentUser.username, 'ESTADO_USUARIO', `${u.isLocked ? 'Bloqueó' : 'Desbloqueó'} al usuario @${u.username}`);
+                renderUsersTable();
+                renderQuickUsersLogin();
+            }
+        }
+
+        function resetPasswordDefault(id) {
+            const u = state.users.find(x => x.id === id);
+            if (u) {
+                u.password = '1234';
+                addAuditLog(state.currentUser.username, 'CLAVE_RESTABLECIDA', `Contraseña de @${u.username} restablecida a "1234"`);
+                alert(`✅ La contraseña de ${u.name} (@${u.username}) fue restablecida por defecto a 1234.`);
+            }
+        }
+
+        function deleteUser(id) {
+            const u = state.users.find(x => x.id === id);
+            if (u) {
+                if (confirm(`¿Está seguro de eliminar al usuario ${u.name}?`)) {
+                    state.users = state.users.filter(x => x.id !== id);
+                    addAuditLog(state.currentUser.username, 'USUARIO_ELIMINADO', `Se eliminó al usuario @${u.username}`);
+                    renderUsersTable();
+                    renderQuickUsersLogin();
+                }
+            }
+        }
+
+        // --- PASSWORD CHANGE SELF-SERVICE ---
+        function openChangePasswordModal() {
+            document.getElementById('change-pass-modal').classList.remove('hidden');
+        }
+
+        function closeChangePasswordModal() {
+            document.getElementById('change-pass-modal').classList.add('hidden');
+        }
+
+        function handleChangePasswordSubmit(e) {
+            e.preventDefault();
+            const curr = document.getElementById('pass-current').value;
+            const newP = document.getElementById('pass-new').value;
+
+            if (curr !== state.currentUser.password) {
+                alert('La contraseña actual es incorrecta.');
+                return;
+            }
+
+            state.currentUser.password = newP;
+            addAuditLog(state.currentUser.username, 'CAMBIO_CLAVE', 'El usuario actualizó su contraseña');
+            alert('✅ Contraseña actualizada correctamente.');
+            closeChangePasswordModal();
+        }
+
+        // --- AUDIT LOG MODULE ---
+        function addAuditLog(user, action, detail) {
+            const log = {
+                timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+                user,
+                action,
+                detail
+            };
+            state.auditLogs.unshift(log);
+            renderAuditLogs();
+        }
+
+        function renderAuditLogs() {
+            const tbody = document.getElementById('audit-log-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            state.auditLogs.forEach(l => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                tr.innerHTML = `
+                    <td class="p-3 text-xs font-mono text-slate-500">${l.timestamp}</td>
+                    <td class="p-3 font-bold text-slate-800">@${l.user}</td>
+                    <td class="p-3">
+                        <span class="text-[10px] font-black px-2 py-0.5 rounded uppercase bg-slate-200 text-slate-700">
+                            ${l.action}
+                        </span>
+                    </td>
+                    <td class="p-3 text-xs text-slate-600">${l.detail}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function clearAuditLogs() {
+            state.auditLogs = [];
+            renderAuditLogs();
+        }
+
+        // --- NAVIGATION & TABS ---
+        function switchTab(tabId) {
+            document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+            document.querySelectorAll('.nav-tab').forEach(btn => {
+                btn.classList.remove('text-amber-400');
+                btn.classList.add('text-slate-400');
+            });
+
+            const activeView = document.getElementById(`view-${tabId}`);
+            if (activeView) activeView.classList.remove('hidden');
+
+            const activeBtn = document.getElementById(`nav-${tabId.split('-')[0]}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-400');
+                activeBtn.classList.add('text-amber-400');
+            }
+
+            if (tabId === 'admin-users') renderUsersTable();
+        }
+
+        // --- POS / ORDERING FUNCTIONS ---
+        function filterCategory(cat) {
+            state.categoriesFilter = cat;
+            document.querySelectorAll('.cat-btn').forEach(b => {
+                b.classList.remove('bg-amber-500', 'text-slate-900', 'font-semibold');
+                b.classList.add('bg-white', 'text-slate-600', 'font-medium');
+            });
+            event.target.classList.remove('bg-white', 'text-slate-600', 'font-medium');
+            event.target.classList.add('bg-amber-500', 'text-slate-900', 'font-semibold');
+            renderDishes();
+        }
+
+        function renderDishes() {
+            const grid = document.getElementById('dishes-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            const filtered = state.categoriesFilter === 'todos' 
+                ? state.dishes 
+                : state.dishes.filter(d => d.category === state.categoriesFilter);
+
+            filtered.forEach(dish => {
+                const isAvailable = dish.stock > 0;
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between transition hover:shadow-md ${!isAvailable ? 'opacity-60' : ''}`;
+                
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-3xl">${dish.image}</span>
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${isAvailable ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}">
+                                ${isAvailable ? `Disponible (${dish.stock})` : 'Agotado'}
+                            </span>
+                        </div>
+                        <h4 class="font-bold text-slate-800">${dish.name}</h4>
+                        <p class="text-xs text-slate-500 mt-1 line-clamp-2">${dish.desc}</p>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-slate-400 block"><i class="fa-regular fa-clock"></i> ~${dish.time} min</span>
+                            <span class="font-bold text-slate-900 text-base">$${dish.price.toFixed(2)}</span>
+                        </div>
+                        <button onclick="addToOrder(${dish.id})" ${!isAvailable ? 'disabled' : ''} class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-3 py-1.5 rounded-lg text-xs transition disabled:bg-slate-200 disabled:text-slate-400 flex items-center gap-1">
+                            <i class="fa-solid fa-plus"></i> Agregar
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function addToOrder(dishId) {
+            const currentTable = state.tables.find(t => t.id === state.selectedTableId);
+            const dish = state.dishes.find(d => d.id === dishId);
+
+            if (!dish || dish.stock <= 0) return;
+
+            const existingIndex = currentTable.order.findIndex(item => item.dishId === dishId);
+            if (existingIndex > -1) {
+                currentTable.order[existingIndex].qty += 1;
+            } else {
+                currentTable.order.push({
+                    dishId: dish.id,
+                    name: dish.name,
+                    price: dish.price,
+                    time: dish.time,
+                    qty: 1,
+                    notes: '',
+                    allergy: ''
+                });
+            }
+
+            renderCurrentOrder();
+        }
+
+        function renderCurrentOrder() {
+            const currentTable = state.tables.find(t => t.id === state.selectedTableId);
+            const container = document.getElementById('order-items-list');
+            if (!container) return;
+
+            document.getElementById('current-table-label').innerText = currentTable.name;
+            document.getElementById('order-table-title').innerText = `${currentTable.name} - Mesero: ${state.currentUser ? state.currentUser.name : 'Desconocido'}`;
+
+            if (currentTable.order.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-slate-400 py-12">
+                        <i class="fa-solid fa-cart-flatbed-suitcases text-4xl mb-2 text-slate-300"></i>
+                        <p class="text-sm">No hay productos agregados a esta mesa.</p>
+                    </div>
+                `;
+                document.getElementById('estimated-time').innerText = '0 min';
+                document.getElementById('order-total').innerText = '$0.00';
+                return;
+            }
+
+            container.innerHTML = '';
+            let total = 0;
+            let maxTime = 0;
+
+            currentTable.order.forEach((item, index) => {
+                total += item.price * item.qty;
+                if (item.time > maxTime) maxTime = item.time;
+
+                const itemEl = document.createElement('div');
+                itemEl.className = 'bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2';
+                itemEl.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="font-semibold text-slate-800 text-sm">${item.name}</div>
+                        <div class="font-bold text-slate-900 text-sm">$${(item.price * item.qty).toFixed(2)}</div>
+                    </div>
+                    
+                    ${(item.allergy || item.notes) ? `
+                        <div class="text-xs bg-amber-50 border border-amber-200 text-amber-800 rounded p-1.5 space-y-0.5">
+                            ${item.allergy ? `<div><i class="fa-solid fa-triangle-exclamation text-amber-600"></i> <strong>Alergia:</strong> ${item.allergy}</div>` : ''}
+                            ${item.notes ? `<div><i class="fa-solid fa-pen"></i> <strong>Nota:</strong> ${item.notes}</div>` : ''}
+                        </div>
+                    ` : ''}
+
+                    <div class="flex justify-between items-center pt-1 border-t border-slate-200">
+                        <button onclick="openNotesModal(${index})" class="text-xs text-amber-600 hover:text-amber-800 font-medium flex items-center gap-1">
+                            <i class="fa-solid fa-note-sticky"></i> ${item.notes || item.allergy ? 'Editar Notas' : '+ Observación'}
+                        </button>
+                        
+                        <div class="flex items-center space-x-2">
+                            <button onclick="updateQty(${index}, -1)" class="w-6 h-6 rounded bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-700 font-bold text-xs">-</button>
+                            <span class="text-xs font-bold text-slate-800">${item.qty}</span>
+                            <button onclick="updateQty(${index}, 1)" class="w-6 h-6 rounded bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-700 font-bold text-xs">+</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(itemEl);
+            });
+
+            document.getElementById('estimated-time').innerText = `${maxTime} min`;
+            document.getElementById('order-total').innerText = `$${total.toFixed(2)}`;
+        }
+
+        function updateQty(index, delta) {
+            const currentTable = state.tables.find(t => t.id === state.selectedTableId);
+            currentTable.order[index].qty += delta;
+            if (currentTable.order[index].qty <= 0) {
+                currentTable.order.splice(index, 1);
+            }
+            renderCurrentOrder();
+        }
+
+        function clearCurrentOrder() {
+            const currentTable = state.tables.find(t => t.id === state.selectedTableId);
+            currentTable.order = [];
+            renderCurrentOrder();
+        }
+
+        function submitOrder() {
+            const currentTable = state.tables.find(t => t.id === state.selectedTableId);
+            if (currentTable.order.length === 0) {
+                alert('La comanda está vacía.');
+                return;
+            }
+
+            const maxTime = Math.max(...currentTable.order.map(i => i.time));
+            const newOrder = {
+                id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
+                tableId: currentTable.id,
+                tableName: currentTable.name,
+                createdAt: new Date(),
+                estimatedMinutes: maxTime,
+                status: 'preparacion',
+                items: JSON.parse(JSON.stringify(currentTable.order))
+            };
+
+            currentTable.order.forEach(item => {
+                const dish = state.dishes.find(d => d.id === item.dishId);
+                if (dish) dish.stock = Math.max(0, dish.stock - item.qty);
+            });
+
+            state.kitchenOrders.push(newOrder);
+            currentTable.status = 'ocupada';
+            currentTable.order = [];
+
+            addAuditLog(state.currentUser ? state.currentUser.username : 'desconocido', 'PEDIDO_ENVIADO', `Envío de comanda ${newOrder.id} a la cocina para ${newOrder.tableName}`);
+
+            renderDishes();
+            renderCurrentOrder();
+            renderTables();
+            renderKitchen();
+
+            alert(`✅ Pedido ${newOrder.id} enviado exitosamente a la cocina.`);
+        }
+
+        // --- MODAL NOTES ---
+        function openNotesModal(index) {
+            state.editingOrderItemIndex = index;
+            const currentTable = state.tables.find(t => t.id === state.selectedTableId);
+            const item = currentTable.order[index];
+
+            document.getElementById('modal-dish-title').innerText = item.name;
+            document.getElementById('modal-allergy-input').value = item.allergy || '';
+            document.getElementById('modal-notes-input').value = item.notes || '';
+            document.getElementById('notes-modal').classList.remove('hidden');
+        }
+
+        function closeNotesModal() {
+            document.getElementById('notes-modal').classList.add('hidden');
+            state.editingOrderItemIndex = null;
+        }
+
+        function saveDishCustomizations() {
+            if (state.editingOrderItemIndex !== null) {
+                const currentTable = state.tables.find(t => t.id === state.selectedTableId);
+                const item = currentTable.order[state.editingOrderItemIndex];
+                item.allergy = document.getElementById('modal-allergy-input').value.trim();
+                item.notes = document.getElementById('modal-notes-input').value.trim();
+                renderCurrentOrder();
+            }
+            closeNotesModal();
+        }
+
+        // --- TABLES VIEW ---
+        function renderTables() {
+            const grid = document.getElementById('tables-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            state.tables.forEach(table => {
+                const activeKitchenOrder = state.kitchenOrders.find(o => o.tableId === table.id);
+                let badgeColor = 'bg-emerald-500';
+                let statusText = 'Disponible';
+
+                if (table.status === 'reservada') {
+                    badgeColor = 'bg-purple-500';
+                    statusText = 'Reservada';
+                } else if (activeKitchenOrder) {
+                    if (activeKitchenOrder.status === 'preparacion') {
+                        badgeColor = 'bg-amber-500';
+                        statusText = 'En Preparación';
+                    } else if (activeKitchenOrder.status === 'listo') {
+                        badgeColor = 'bg-blue-500 animate-pulse-fast';
+                        statusText = 'Pedido Listo ¡Entregar!';
+                    }
+                }
+
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-2xl border ${state.selectedTableId === table.id ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-slate-200'} p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition cursor-pointer`;
+                card.onclick = () => {
+                    state.selectedTableId = table.id;
+                    switchTab('mesero-pos');
+                    renderCurrentOrder();
+                    renderTables();
+                };
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-3 h-3 rounded-full ${badgeColor}"></span>
+                            <h3 class="font-bold text-slate-800 text-lg">${table.name}</h3>
+                        </div>
+                        <i class="fa-solid fa-chair text-slate-300 text-xl"></i>
+                    </div>
+
+                    <div class="my-4">
+                        <p class="text-xs text-slate-500">Estado:</p>
+                        <p class="text-sm font-semibold text-slate-800">${statusText}</p>
+                        ${activeKitchenOrder ? `<p class="text-xs text-amber-600 font-bold mt-1"><i class="fa-solid fa-receipt"></i> Order: ${activeKitchenOrder.id}</p>` : ''}
+                    </div>
+
+                    <button class="w-full text-xs py-2 rounded-lg font-bold ${state.selectedTableId === table.id ? 'bg-amber-500 text-slate-900' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'} transition">
+                        ${state.selectedTableId === table.id ? 'Mesa Seleccionada' : 'Atender Mesa'}
+                    </button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // --- KITCHEN VIEW (KDS) ---
+        function renderKitchen() {
+            const grid = document.getElementById('kitchen-orders-grid');
+            if (!grid) return;
+
+            const badge = document.getElementById('cocina-count-badge');
+            const activeOrders = state.kitchenOrders.filter(o => o.status !== 'entregado');
+            
+            document.getElementById('active-kitchen-orders-count').innerText = activeOrders.length;
+            if (activeOrders.length > 0) {
+                badge.innerText = activeOrders.length;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            grid.innerHTML = '';
+
+            if (activeOrders.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center text-slate-500 py-20">
+                        <i class="fa-solid fa-circle-check text-5xl mb-3 text-slate-700"></i>
+                        <p class="text-lg">No hay comandas pendientes en cocina.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            activeOrders.forEach(order => {
+                const elapsedMin = Math.floor((new Date() - new Date(order.createdAt)) / 60000);
+                const isOverdue = elapsedMin > order.estimatedMinutes;
+
+                const card = document.createElement('div');
+                card.className = `rounded-2xl border ${order.status === 'listo' ? 'border-emerald-500 bg-slate-800/80' : 'border-slate-700 bg-slate-800'} p-4 text-white shadow-xl flex flex-col justify-between`;
+                
+                let itemsHtml = order.items.map(i => `
+                    <li class="border-b border-slate-700/50 pb-2">
+                        <div class="flex justify-between font-bold">
+                            <span><span class="text-amber-400 font-extrabold mr-1.5">${i.qty}x</span> ${i.name}</span>
+                        </div>
+                        ${i.allergy ? `<div class="text-xs text-red-400 font-semibold bg-red-950/50 px-2 py-0.5 rounded mt-1"><i class="fa-solid fa-triangle-exclamation"></i> Alergia: ${i.allergy}</div>` : ''}
+                        ${i.notes ? `<div class="text-xs text-amber-300 italic mt-0.5"><i class="fa-solid fa-pen"></i> ${i.notes}</div>` : ''}
+                    </li>
+                `).join('');
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-3">
+                            <div>
+                                <span class="text-xs text-slate-400 block">${order.id}</span>
+                                <h3 class="font-bold text-xl text-amber-400">${order.tableName}</h3>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs font-bold px-2 py-1 rounded ${isOverdue ? 'bg-red-500/20 text-red-400 border border-red-500' : 'bg-slate-700 text-slate-300'}">
+                                    <i class="fa-regular fa-clock"></i> ${elapsedMin} / ${order.estimatedMinutes} min
+                                </span>
+                            </div>
+                        </div>
+
+                        <ul class="space-y-2 text-sm text-slate-200">
+                            ${itemsHtml}
+                        </ul>
+                    </div>
+
+                    <div class="mt-6 pt-3 border-t border-slate-700">
+                        ${order.status === 'preparacion' ? `
+                            <button onclick="markOrderReady('${order.id}')" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-black py-2.5 rounded-xl transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-check"></i> Marcar como Listo
+                            </button>
+                        ` : `
+                            <button onclick="markOrderDelivered('${order.id}')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-bell"></i> Entregado a Mesa
+                            </button>
+                        `}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function markOrderReady(orderId) {
+            const order = state.kitchenOrders.find(o => o.id === orderId);
+            if (order) {
+                order.status = 'listo';
+                addAuditLog(state.currentUser ? state.currentUser.username : 'cocina', 'PEDIDO_LISTO', `Comanda ${orderId} lista para entrega`);
+                renderKitchen();
+                renderTables();
+            }
+        }
+
+        function markOrderDelivered(orderId) {
+            const orderIndex = state.kitchenOrders.findIndex(o => o.id === orderId);
+            if (orderIndex > -1) {
+                const tableId = state.kitchenOrders[orderIndex].tableId;
+                state.kitchenOrders.splice(orderIndex, 1);
+                
+                const table = state.tables.find(t => t.id === tableId);
+                if (table) table.status = 'disponible';
+
+                addAuditLog(state.currentUser ? state.currentUser.username : 'mesero', 'PEDIDO_ENTREGADO', `Comanda ${orderId} entregada al cliente`);
+
+                renderKitchen();
+                renderTables();
+            }
+        }
+
+        // --- INVENTORY VIEW ---
+        function renderInventory() {
+            const tbody = document.getElementById('inventory-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            state.inventory.forEach((item, i) => {
+                const isLow = item.stock <= item.min;
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                tr.innerHTML = `
+                    <td class="p-3 font-semibold text-slate-800">${item.name}</td>
+                    <td class="p-3 font-bold text-slate-900">${item.stock} ${item.unit}</td>
+                    <td class="p-3 text-slate-500">${item.min} ${item.unit}</td>
+                    <td class="p-3">
+                        <span class="text-xs px-2.5 py-1 rounded-full font-semibold ${isLow ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}">
+                            ${isLow ? 'Stock Crítico' : 'Normal'}
+                        </span>
+                    </td>
+                    <td class="p-3 text-right">
+                        <button onclick="addStock(${i})" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded transition">
+                            + Reabastecer 10
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function addStock(index) {
+            state.inventory[index].stock += 10;
+            addAuditLog(state.currentUser ? state.currentUser.username : 'admin', 'REABASTECER_INVENTARIO', `Añadidas +10 unidades a ${state.inventory[index].name}`);
+            renderInventory();
+        }
+    </script>
+</body>
+</html>
